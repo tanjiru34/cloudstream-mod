@@ -20,11 +20,22 @@ jobs:
       - name: Grant execute permission
         run: chmod +x gradlew
         
-      - name: Build APK
-        run: ./gradlew assembleDebug
-        
-      - name: Upload APK
+      - name: Build and find APK
+        run: |
+          echo "=== Building APK ==="
+          ./gradlew assembleDebug 2>&1 | tail -50
+          
+          echo "=== Searching for APK files ==="
+          find . -type f -name "*.apk" 2>/dev/null | head -20 || echo "No APK files found"
+          
+          echo "=== Checking build directory ==="
+          ls -la app/build/ 2>/dev/null || echo "No build directory"
+          ls -la app/build/outputs/ 2>/dev/null || echo "No outputs directory"
+          ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk directory"
+          
+      - name: Upload if found
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: cloudstream-apk
+          path: app/build/outputs/apk/**/*.apk
